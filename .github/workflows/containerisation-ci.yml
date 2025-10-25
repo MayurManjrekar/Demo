@@ -9,7 +9,7 @@ on:
     paths: 
       - micro-service/Helm-Charts/frontend/**
       - micro-service/online-botique-src/frontend/**
-      - .github/workflows/containerisation-ci.yaml
+      - .github/workflows/containerisation-ci.yml
 
 jobs:
   Image-Build:
@@ -51,7 +51,7 @@ jobs:
           echo "Pushing the docker image"
           # docker push gcr.io/${{vars.PROJECT_ID}}/frontend:${{github.run_number}}   
       
-      - name: Update Front end image name
+      - name: Update image name in Helm Chart
         run: |
           sed -i 's#frontend_image#gcr.io/${{vars.PROJECT_ID}}/frontend:${{github.run_number}}#g' ${{ github.workspace }}/micro-service/Helm-Charts/frontend/values.yaml
 
