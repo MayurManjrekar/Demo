@@ -61,5 +61,5 @@ jobs:
       - uses: actions/upload-artifact@main
         name: Uploading Application Artifact
         with:
-          name: Application-Artifacts
-          path: ${{ github.workspace }}/Application/*          
+          name: Containerised-Application-Artifacts
+          path: ${{ github.workspace }}/micro-service/Helm-Charts/frontend/*          
