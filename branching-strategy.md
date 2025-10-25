@@ -45,10 +45,10 @@ Create a pull request with required approver. Review the changes ard approve the
 ## Screenshot 
 
 1. Default Branch 
-![Default Branch](Images/1-defaut-branch.png)
+![Default Branch](Images/1-defaut-branch.PNG)
 
 2. Branch Protections 
-![Branch Protections](Images/1-branch-protection.png)
+![Branch Protections](Images/1-branch-protection.PNG)
 
 3. Pull Request 
-![Pull Request](Images/1-pull-request-review.png)
+![Pull Request](Images/1-pull-request-review.PNG)
