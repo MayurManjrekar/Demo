@@ -36,14 +36,15 @@ jobs:
         run: |
             docker images 
 
-      - name: gcloud 
-        uses: google-github-actions/setup-gcloud@94337306dda8180d967a56932ceb4ddcf01edae7
-        with:
-          service_account_key: ${{ secrets.SA_KEY }}
-          project_id: ${{ vars.PROJECT_ID }}  
+      # - name: gcloud 
+      #   uses: google-github-actions/setup-gcloud@94337306dda8180d967a56932ceb4ddcf01edae7
+      #   with:
+      #     service_account_key: ${{ secrets.SA_KEY }}
+      #     project_id: ${{ vars.PROJECT_ID }}  
 
       - run: |-
-          gcloud --quiet auth configure-docker
+          echo "gcloud --quiet auth configure-docker"
+          # gcloud --quiet auth configure-docker
 
       - name: docker build and push
         run: |
