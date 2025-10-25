@@ -1,4 +1,4 @@
-name: Frontend Service Build
+name: Containerisation CI
 on:
   workflow_dispatch:
   push:
@@ -12,8 +12,8 @@ on:
       - .github/workflows/containerisation-ci.yaml
 
 jobs:
-  Frontend-Image-Build:
-    name: 'Frontend Docker Build'
+  Image-Build:
+    name: 'Docker Build'
     runs-on: ubuntu-latest
     defaults:
       run:
