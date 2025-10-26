@@ -51,15 +51,22 @@ jobs:
           echo "Pushing the docker image"
           # docker push gcr.io/${{vars.PROJECT_ID}}/frontend:${{github.run_number}}   
       
-      - name: Update image name in Helm Chart
+      - name: Update image name in Helm Chart & deployment.yaml
         run: |
           sed -i 's#frontend_image#gcr.io/${{vars.PROJECT_ID}}/frontend:${{github.run_number}}#g' ${{ github.workspace }}/micro-service/Helm-Charts/frontend/values.yaml
+          sed -i 's#containerised_image#gcr.io/${{vars.PROJECT_ID}}/frontend:${{github.run_number}}#g' ${{ github.workspace }}/micro-service/containerised-app-deployment.yaml
 
       - name: Creating artifact
         run: echo "Creating artifact"
         
       - uses: actions/upload-artifact@main
-        name: Uploading Application Artifact
+        name: Uploading Helm Artifact
         with:
-          name: Containerised-Application-Artifacts
+          name: Deployment-HELM-Artifacts
           path: ${{ github.workspace }}/micro-service/Helm-Charts/frontend/*          
+
+      - uses: actions/upload-artifact@main
+        name: Uploading Deployment YAML Artifact
+        with:
+          name: Deployment-YAML-Artifacts
+          path: ${{ github.workspace }}/micro-service/containerised-app-deployment.yaml 
