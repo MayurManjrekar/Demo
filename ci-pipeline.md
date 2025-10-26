@@ -1,4 +1,5 @@
 ## CI Pipeline
+[![Containerisation CI](https://github.com/MayurManjrekar/Demo/actions/workflows/containerisation-ci.yml/badge.svg)](https://github.com/MayurManjrekar/Demo/actions/workflows/containerisation-ci.yml)
 
 The primary purpose of this Continuous Integration pipeline is to automatically compile, publish, and create a deployable artifact for the `dotnet6-app` whenever relevant changes are introduced to the source code.
 
