@@ -62,7 +62,7 @@ jobs:
       - uses: actions/upload-artifact@main
         name: Uploading Helm Artifact
         with:
-          name: Deployment-HELM-Artifacts
+          name: Application-Artifacts
           path: ${{ github.workspace }}/micro-service/Helm-Charts/frontend/*          
 
       - uses: actions/upload-artifact@main
