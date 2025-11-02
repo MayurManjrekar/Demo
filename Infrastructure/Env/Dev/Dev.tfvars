@@ -1,7 +1,12 @@
 create_cluster  = true
 project_id      = "qwiklabs-gcp-03-02605f581a7f"
 region          = "us-central1"
-cluster_info    = "dev-gke-cluster"
+cluster_info = {
+  name                     = "dev-gke-cluster"
+  remove_default_node_pool = true
+  initial_node_count       = 1
+  release_channel          = "REGULAR" 
+}
 network         = "dev-vpc-network"
 subnetwork      = "dev-cluster-subnet"
 service_account = "sa-dev-gke@gcp-dev-environment-101.iam.gserviceaccount.com"

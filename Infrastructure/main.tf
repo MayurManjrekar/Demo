@@ -1,7 +1,6 @@
 module "gke_cluster" {
   count           = var.create_cluster ? 1 : 0
   source          = "./modules/kubernetes-engine"
-
   project_id      = var.project_id
   region          = var.region
   cluster_info    = var.cluster_info
