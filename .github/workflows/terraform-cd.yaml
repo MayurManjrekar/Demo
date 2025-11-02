@@ -45,11 +45,11 @@ jobs:
         run: |
           echo echo "The .tfvars file path is: $TFVARS"
 
-      - name: Terraform Plan
-        id: plan
-        run: terraform plan -var-file="{{ env.TFVARS }}" -no-color -input=false
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.SA_KEY }}
+      # - name: Terraform Plan
+      #   id: plan
+      #   run: terraform plan -var-file="{{ env.TFVARS }}" -no-color -input=false
+      #   env:
+      #     GOOGLE_CREDENTIALS: ${{ secrets.SA_KEY }}
 
   Terraform-Apply:
     name: ${{ github.event.inputs.project_env }}-Terraform-Apply
