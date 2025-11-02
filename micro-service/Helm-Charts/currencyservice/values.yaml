@@ -1,6 +1,0 @@
-# CURRENCY SERVICE
-currency_service_name: currencyservice
-currency_service_image: gcr.io/google-samples/microservices-demo/currencyservice:v0.6.0
-service:
-  port: 7000
-  type: ClusterIP

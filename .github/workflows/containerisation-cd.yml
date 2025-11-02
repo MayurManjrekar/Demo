@@ -5,9 +5,22 @@ on:
       helm_command:
         description: "install/upgrade/rollback"
         required: True
+        type: choice
+        options:
+          - install
+          - upgrade
+          - rollback
+      project_env:
+        description: "Project Env - Dev, Test, Prod"
+        required: True
+        type: choice
+        options:
+          - Dev
+          - Test
+          - Prod
 env:
     helm_command: ${{ inputs.helm_command}}
-
+    env: ${{ inputs.project_env }}
 jobs:
   Verify-Deployment-Dev:
     name: 'Verify Dev Deployment: Frontend Service'
@@ -23,7 +36,7 @@ jobs:
     - name: Download Artifacts
       uses: dawidd6/action-download-artifact@v8
       with:
-        workflow: frontend_ci.yaml
+        workflow: containerisation-ci.yaml
         github_token: ${{ github.token }}
         repo: ${{ github.repository }}
         name: Application-Artifacts
@@ -38,10 +51,10 @@ jobs:
       run: |
           if [[ ${{ inputs.helm_command}} == "install" ]]
           then 
-            echo "helm install frontend --debug --dry-run Application-Artifacts/Helm-Charts/frontend"
+            echo "helm install frontend --debug --dry-run -f Application-Artifacts/Helm-Charts/frontend/values-${{ inputs.project_env }}.yaml  Application-Artifacts/Helm-Charts/frontend "
           elif [[ ${{ inputs.helm_command}} == "upgrade" ]]
           then
-            echo "helm upgrade frontend --debug --dry-run Application-Artifacts/Helm-Charts/frontend"
+            echo "helm upgrade frontend --debug --dry-run -f Application-Artifacts/Helm-Charts/frontend/values-${{ inputs.project_env }}.yaml  Application-Artifacts/Helm-Charts/frontend"
           elif [[ ${{ inputs.helm_command}} == "rollback" ]]
           then
             echo "helm rollback frontend --debug --dry-run VERSION_NUMBER"
@@ -49,201 +62,43 @@ jobs:
             echo "Wrong input" 
           fi 
 
-    - name: Install Helm
-      run: |
-          curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
-          sudo apt-get install apt-transport-https --yes
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
-          sudo apt-get update
-          sudo apt-get install helm -y 
-          helm version
+    # - name: Install Helm
+    #   run: |
+    #       curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+    #       sudo apt-get install apt-transport-https --yes
+    #       echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+    #       sudo apt-get update
+    #       sudo apt-get install helm -y 
+    #       helm version
 
-    - name: Setup Gcloud CLI
-      uses: google-github-actions/setup-gcloud@94337306dda8180d967a56932ceb4ddcf01edae7
-      with:
-        service_account_key: ${{ secrets.GKE_SA_KEY }}
-        project_id: ${{ vars.PROJECT_ID }}  
+    # - name: Setup Gcloud CLI
+    #   uses: google-github-actions/setup-gcloud@94337306dda8180d967a56932ceb4ddcf01edae7
+    #   with:
+    #     service_account_key: ${{ secrets.GKE_SA_KEY }}
+    #     project_id: ${{ vars.PROJECT_ID }}  
 
-    - name: GKE-Gcloud Auth setup
-      run: |
-          gcloud --quiet auth configure-docker
-          gcloud components install gke-gcloud-auth-plugin
-          gke-gcloud-auth-plugin --version
-          gcloud config set project "${{vars.PROJECT_ID}}"
-          gcloud container clusters get-credentials "${{vars.GKE_CLUSTER_NAME}}" --region="${{vars.GKE_REGION}}"
+    # - name: GKE-Gcloud Auth setup
+    #   run: |
+    #       gcloud --quiet auth configure-docker
+    #       gcloud components install gke-gcloud-auth-plugin
+    #       gke-gcloud-auth-plugin --version
+    #       gcloud config set project "${{vars.PROJECT_ID}}"
+    #       gcloud container clusters get-credentials "${{vars.GKE_CLUSTER_NAME}}" --region="${{vars.GKE_REGION}}"
 
-    - name: ${{ inputs.helm_command}} frontend Application
-      run: |
-          if [[ ${{ inputs.helm_command}} == "install" ]]
-          then 
-            helm install frontend --debug --dry-run Application-Artifacts/Helm-Charts/frontend
-          elif [[ ${{ inputs.helm_command}} == "upgrade" ]]
-          then
-            helm upgrade frontend --debug --dry-run Application-Artifacts/Helm-Charts/frontend
-          elif [[ ${{ inputs.helm_command}} == "rollback" ]]
-          then
-            helm rollback frontend --debug --dry-run VERSION_NUMBER
-          else 
-            echo "Wrong input" 
-          fi 
-
-
-  Verify-Deployment-Test:
-    name: 'Verify Test Deployment: Frontend Service'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-    if: github.ref == 'refs/heads/Test'
-    environment:
-     name: Test_Env
-    steps:
-
-    - name: Download Artifacts
-      uses: dawidd6/action-download-artifact@v8
-      with:
-        workflow: frontend_ci.yaml
-        github_token: ${{ github.token }}
-        repo: ${{ github.repository }}
-        name: Application-Artifacts
-        path: Application-Artifacts
-
-    - name: Environment
-      run: |
-          echo "${{ vars.PROJECT_ID }}"
-          echo "${{ vars.GKE_CLUSTER_NAME }}"
-
-    - name: Application Frontend
-      run: |
-          if [[ ${{ inputs.helm_command}} == "install" ]]
-          then 
-            echo "helm install frontend --debug --dry-run Application-Artifacts/Helm-Charts/frontend"
-          elif [[ ${{ inputs.helm_command}} == "upgrade" ]]
-          then
-            echo "helm upgrade frontend --debug --dry-run Application-Artifacts/Helm-Charts/frontend"
-          elif [[ ${{ inputs.helm_command}} == "rollback" ]]
-          then
-            echo "helm rollback frontend --debug --dry-run VERSION_NUMBER"
-          else 
-            echo "Wrong input" 
-          fi 
-
-    - name: Install Helm
-      run: |
-          curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
-          sudo apt-get install apt-transport-https --yes
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
-          sudo apt-get update
-          sudo apt-get install helm -y 
-          helm version
-    
-    - name: Setup Gcloud CLI
-      uses: google-github-actions/setup-gcloud@94337306dda8180d967a56932ceb4ddcf01edae7
-      with:
-        service_account_key: ${{ secrets.GKE_SA_KEY }}
-        project_id: ${{ vars.PROJECT_ID }}  
-
-    - name: GKE-Gcloud Auth setup
-      run: |
-          gcloud --quiet auth configure-docker
-          gcloud components install gke-gcloud-auth-plugin
-          gke-gcloud-auth-plugin --version
-          gcloud config set project "${{vars.PROJECT_ID}}"
-          gcloud container clusters get-credentials "${{vars.GKE_CLUSTER_NAME}}" --region="${{vars.GKE_REGION}}"
-
-    - name: ${{ inputs.helm_command}} frontend Application
-      run: |
-          if [[ ${{ inputs.helm_command}} == "install" ]]
-          then 
-            helm install frontend --debug --dry-run Application-Artifacts/Helm-Charts/frontend
-          elif [[ ${{ inputs.helm_command}} == "upgrade" ]]
-          then
-            helm upgrade frontend --debug --dry-run Application-Artifacts/Helm-Charts/frontend
-          elif [[ ${{ inputs.helm_command}} == "rollback" ]]
-          then
-            helm rollback frontend --debug --dry-run VERSION_NUMBER
-          else 
-            echo "Wrong input" 
-          fi 
-
-  Verify-Deployment-Prod:
-    name: 'Verify Prod Deployment: Frontend Service'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-    if: github.ref == 'refs/heads/Prod'
-    environment:
-     name: Prod_Env
-    steps:
-
-    - name: Download Artifacts
-      uses: dawidd6/action-download-artifact@v8
-      with:
-        workflow: frontend_ci.yaml
-        github_token: ${{ github.token }}
-        repo: ${{ github.repository }}
-        name: Application-Artifacts
-        path: Application-Artifacts
-
-    - name: Environment
-      run: |
-          echo "${{ vars.PROJECT_ID }}"
-          echo "${{ vars.GKE_CLUSTER_NAME }}"
-
-    - name: Application Frontend
-      run: |
-          if [[ ${{ inputs.helm_command}} == "install" ]]
-          then 
-            echo "helm install frontend --debug --dry-run Application-Artifacts/Helm-Charts/frontend"
-          elif [[ ${{ inputs.helm_command}} == "upgrade" ]]
-          then
-            echo "helm upgrade frontend --debug --dry-run Application-Artifacts/Helm-Charts/frontend"
-          elif [[ ${{ inputs.helm_command}} == "rollback" ]]
-          then
-            echo "helm rollback frontend --debug --dry-run VERSION_NUMBER"
-          else 
-            echo "Wrong input" 
-          fi 
-
-    - name: Install Helm
-      run: |
-          curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
-          sudo apt-get install apt-transport-https --yes
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
-          sudo apt-get update
-          sudo apt-get install helm -y 
-          helm version
-    
-    - name: Setup Gcloud CLI
-      uses: google-github-actions/setup-gcloud@94337306dda8180d967a56932ceb4ddcf01edae7
-      with:
-        service_account_key: ${{ secrets.GKE_SA_KEY }}
-        project_id: ${{ vars.PROJECT_ID }}  
-
-    - name: GKE-Gcloud Auth setup
-      run: |
-          gcloud --quiet auth configure-docker
-          gcloud components install gke-gcloud-auth-plugin
-          gke-gcloud-auth-plugin --version
-          gcloud config set project "${{vars.PROJECT_ID}}"
-          gcloud container clusters get-credentials "${{vars.GKE_CLUSTER_NAME}}" --region="${{vars.GKE_REGION}}"
-
-    - name: ${{ inputs.helm_command}} frontend Application
-      run: |
-          if [[ ${{ inputs.helm_command}} == "install" ]]
-          then 
-            helm install frontend --debug --dry-run Application-Artifacts/Helm-Charts/frontend
-          elif [[ ${{ inputs.helm_command}} == "upgrade" ]]
-          then
-            helm upgrade frontend --debug --dry-run Application-Artifacts/Helm-Charts/frontend
-          elif [[ ${{ inputs.helm_command}} == "rollback" ]]
-          then
-            helm rollback frontend --debug --dry-run VERSION_NUMBER
-          else 
-            echo "Wrong input" 
-          fi 
-
+    # - name: ${{ inputs.helm_command}} frontend Application
+    #   run: |
+    #       if [[ ${{ inputs.helm_command}} == "install" ]]
+    #       then 
+    #         helm install frontend --debug --dry-run Application-Artifacts/Helm-Charts/frontend
+    #       elif [[ ${{ inputs.helm_command}} == "upgrade" ]]
+    #       then
+    #         helm upgrade frontend --debug --dry-run Application-Artifacts/Helm-Charts/frontend
+    #       elif [[ ${{ inputs.helm_command}} == "rollback" ]]
+    #       then
+    #         helm rollback frontend --debug --dry-run VERSION_NUMBER
+    #       else 
+    #         echo "Wrong input" 
+    #       fi 
 
   Deploy-Application-Dev:
     name: '${{ inputs.helm_command}} Frontend Service'
@@ -260,7 +115,7 @@ jobs:
     - name: Download Artifacts
       uses: dawidd6/action-download-artifact@v8
       with:
-        workflow: frontend_ci.yaml
+        workflow: containerisation-ci.yaml
         github_token: ${{ github.token }}
         repo: ${{ github.repository }}
         name: Application-Artifacts
@@ -275,10 +130,10 @@ jobs:
       run: |
           if [[ ${{ inputs.helm_command}} == "install" ]]
           then 
-            echo "helm install frontend --debug --dry-run Application-Artifacts/Helm-Charts/frontend"
+            echo "helm install frontend --debug --dry-run -f Application-Artifacts/Helm-Charts/frontend/values-${{ inputs.project_env }}.yaml  Application-Artifacts/Helm-Charts/frontend"
           elif [[ ${{ inputs.helm_command}} == "upgrade" ]]
           then
-            echo "helm upgrade frontend --debug --dry-run Application-Artifacts/Helm-Charts/frontend"
+            echo "helm upgrade frontend --debug --dry-run -f Application-Artifacts/Helm-Charts/frontend/values-${{ inputs.project_env }}.yaml  Application-Artifacts/Helm-Charts/frontend"
           elif [[ ${{ inputs.helm_command}} == "rollback" ]]
           then
             echo "helm rollback frontend --debug --dry-run VERSION_NUMBER"
@@ -286,200 +141,40 @@ jobs:
             echo "Wrong input" 
           fi 
 
-    - name: Install Helm
-      run: |
-          curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
-          sudo apt-get install apt-transport-https --yes
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
-          sudo apt-get update
-          sudo apt-get install helm -y 
-          helm version
+    # - name: Install Helm
+    #   run: |
+    #       curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+    #       sudo apt-get install apt-transport-https --yes
+    #       echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+    #       sudo apt-get update
+    #       sudo apt-get install helm -y 
+    #       helm version
     
-    - name: Setup Gcloud CLI
-      uses: google-github-actions/setup-gcloud@94337306dda8180d967a56932ceb4ddcf01edae7
-      with:
-        service_account_key: ${{ secrets.GKE_SA_KEY }}
-        project_id: ${{ vars.PROJECT_ID }}  
+    # - name: Setup Gcloud CLI
+    #   uses: google-github-actions/setup-gcloud@94337306dda8180d967a56932ceb4ddcf01edae7
+    #   with:
+    #     service_account_key: ${{ secrets.GKE_SA_KEY }}
+    #     project_id: ${{ vars.PROJECT_ID }}  
 
-    - name: GKE-Gcloud Auth setup
-      run: |
-          gcloud --quiet auth configure-docker
-          gcloud components install gke-gcloud-auth-plugin
-          gke-gcloud-auth-plugin --version
-          gcloud config set project "${{vars.PROJECT_ID}}"
-          gcloud container clusters get-credentials "${{vars.GKE_CLUSTER_NAME}}" --region="${{vars.GKE_REGION}}"
+    # - name: GKE-Gcloud Auth setup
+    #   run: |
+    #       gcloud --quiet auth configure-docker
+    #       gcloud components install gke-gcloud-auth-plugin
+    #       gke-gcloud-auth-plugin --version
+    #       gcloud config set project "${{vars.PROJECT_ID}}"
+    #       gcloud container clusters get-credentials "${{vars.GKE_CLUSTER_NAME}}" --region="${{vars.GKE_REGION}}"
 
-    - name: ${{ inputs.helm_command}} frontend Application
-      run: |
-          if [[ ${{ inputs.helm_command}} == "install" ]]
-          then 
-            helm install frontend Application-Artifacts/Helm-Charts/frontend
-          elif [[ ${{ inputs.helm_command}} == "upgrade" ]]
-          then
-            helm upgrade frontend Application-Artifacts/Helm-Charts/frontend
-          elif [[ ${{ inputs.helm_command}} == "rollback" ]]
-          then
-            helm rollback frontend VERSION_NUMBER
-          else 
-            echo "Wrong input" 
-          fi 
-
-
-  Deploy-Application-Test:
-    name: '${{ inputs.helm_command}} Frontend Service'
-    needs: Verify-Deployment-Test
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-    if: github.ref == 'refs/heads/Test'
-    environment:
-     name: Test_Env
-    steps:
-
-    - name: Download Artifacts
-      uses: dawidd6/action-download-artifact@v8
-      with:
-        workflow: frontend_ci.yaml
-        github_token: ${{ github.token }}
-        repo: ${{ github.repository }}
-        name: Application-Artifacts
-        path: Application-Artifacts
-
-    - name: Environment
-      run: |
-          echo "${{ vars.PROJECT_ID }}"
-          echo "${{ vars.GKE_CLUSTER_NAME }}"
-
-    - name: Application Frontend
-      run: |
-          if [[ ${{ inputs.helm_command}} == "install" ]]
-          then 
-            echo "helm install frontend --debug --dry-run Application-Artifacts/Helm-Charts/frontend"
-          elif [[ ${{ inputs.helm_command}} == "upgrade" ]]
-          then
-            echo "helm upgrade frontend --debug --dry-run Application-Artifacts/Helm-Charts/frontend"
-          elif [[ ${{ inputs.helm_command}} == "rollback" ]]
-          then
-            echo "helm rollback frontend --debug --dry-run VERSION_NUMBER"
-          else 
-            echo "Wrong input" 
-          fi 
-
-    - name: Install Helm
-      run: |
-          curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
-          sudo apt-get install apt-transport-https --yes
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
-          sudo apt-get update
-          sudo apt-get install helm -y 
-          helm version
-    
-    - name: Setup Gcloud CLI
-      uses: google-github-actions/setup-gcloud@94337306dda8180d967a56932ceb4ddcf01edae7
-      with:
-        service_account_key: ${{ secrets.GKE_SA_KEY }}
-        project_id: ${{ vars.PROJECT_ID }}  
-
-    - name: GKE-Gcloud Auth setup
-      run: |
-          gcloud --quiet auth configure-docker
-          gcloud components install gke-gcloud-auth-plugin
-          gke-gcloud-auth-plugin --version
-          gcloud config set project "${{vars.PROJECT_ID}}"
-          gcloud container clusters get-credentials "${{vars.GKE_CLUSTER_NAME}}" --region="${{vars.GKE_REGION}}"
-
-    - name: ${{ inputs.helm_command}} frontend Application
-      run: |
-          if [[ ${{ inputs.helm_command}} == "install" ]]
-          then 
-            helm install frontend Application-Artifacts/Helm-Charts/frontend
-          elif [[ ${{ inputs.helm_command}} == "upgrade" ]]
-          then
-            helm upgrade frontend Application-Artifacts/Helm-Charts/frontend
-          elif [[ ${{ inputs.helm_command}} == "rollback" ]]
-          then
-            helm rollback frontend VERSION_NUMBER
-          else 
-            echo "Wrong input" 
-          fi 
-
-
-  Deploy-Application-Prod:
-    name: '${{ inputs.helm_command}} Frontend Service'
-    needs: Verify-Deployment-Prod
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-    if: github.ref == 'refs/heads/Prod'
-    environment:
-     name: Prod_Env
-    steps:
-
-    - name: Download Artifacts
-      uses: dawidd6/action-download-artifact@v8
-      with:
-        workflow: frontend_ci.yaml
-        github_token: ${{ github.token }}
-        repo: ${{ github.repository }}
-        name: Application-Artifacts
-        path: Application-Artifacts
-
-    - name: Environment
-      run: |
-          echo "${{ vars.PROJECT_ID }}"
-          echo "${{ vars.GKE_CLUSTER_NAME }}"
-
-    - name: Application Frontend
-      run: |
-          if [[ ${{ inputs.helm_command}} == "install" ]]
-          then 
-            echo "helm install frontend --debug --dry-run Application-Artifacts/Helm-Charts/frontend"
-          elif [[ ${{ inputs.helm_command}} == "upgrade" ]]
-          then
-            echo "helm upgrade frontend --debug --dry-run Application-Artifacts/Helm-Charts/frontend"
-          elif [[ ${{ inputs.helm_command}} == "rollback" ]]
-          then
-            echo "helm rollback frontend --debug --dry-run VERSION_NUMBER"
-          else 
-            echo "Wrong input" 
-          fi 
-
-    - name: Install Helm
-      run: |
-          curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
-          sudo apt-get install apt-transport-https --yes
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
-          sudo apt-get update
-          sudo apt-get install helm -y 
-          helm version
-    
-    - name: Setup Gcloud CLI
-      uses: google-github-actions/setup-gcloud@94337306dda8180d967a56932ceb4ddcf01edae7
-      with:
-        service_account_key: ${{ secrets.GKE_SA_KEY }}
-        project_id: ${{ vars.PROJECT_ID }}  
-
-    - name: GKE-Gcloud Auth setup
-      run: |
-          gcloud --quiet auth configure-docker
-          gcloud components install gke-gcloud-auth-plugin
-          gke-gcloud-auth-plugin --version
-          gcloud config set project "${{vars.PROJECT_ID}}"
-          gcloud container clusters get-credentials "${{vars.GKE_CLUSTER_NAME}}" --region="${{vars.GKE_REGION}}"
-
-    - name: ${{ inputs.helm_command}} frontend Application
-      run: |
-          if [[ ${{ inputs.helm_command}} == "install" ]]
-          then 
-            helm install frontend Application-Artifacts/Helm-Charts/frontend
-          elif [[ ${{ inputs.helm_command}} == "upgrade" ]]
-          then
-            helm upgrade frontend Application-Artifacts/Helm-Charts/frontend
-          elif [[ ${{ inputs.helm_command}} == "rollback" ]]
-          then
-            helm rollback frontend VERSION_NUMBER
-          else 
-            echo "Wrong input" 
-          fi 
+    # - name: ${{ inputs.helm_command}} frontend Application
+    #   run: |
+    #       if [[ ${{ inputs.helm_command}} == "install" ]]
+    #       then 
+    #         helm install frontend -f Application-Artifacts/Helm-Charts/frontend/values-${{ inputs.project_env }}.yaml  Application-Artifacts/Helm-Charts/frontend
+    #       elif [[ ${{ inputs.helm_command}} == "upgrade" ]]
+    #       then
+    #         helm upgrade frontend -f Application-Artifacts/Helm-Charts/frontend/values-${{ inputs.project_env }}.yaml  Application-Artifacts/Helm-Charts/frontend
+    #       elif [[ ${{ inputs.helm_command}} == "rollback" ]]
+    #       then
+    #         helm rollback frontend VERSION_NUMBER
+    #       else 
+    #         echo "Wrong input" 
+    #       fi 

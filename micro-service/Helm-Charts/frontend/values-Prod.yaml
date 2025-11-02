@@ -1,0 +1,10 @@
+# FRONTEND
+frontend_service_name: frontend
+frontend_service_image: frontend_image
+internal_service:
+  port: 80
+  type: ClusterIP
+external_service:
+  port: 80
+  type: LoadBalancer
+#  ip: 34.46.240.98

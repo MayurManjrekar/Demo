@@ -53,7 +53,9 @@ jobs:
       
       - name: Update image name in Helm Chart & deployment.yaml
         run: |
-          sed -i 's#frontend_image#gcr.io/${{vars.PROJECT_ID}}/frontend:${{github.run_number}}#g' ${{ github.workspace }}/micro-service/Helm-Charts/frontend/values.yaml
+          sed -i 's#frontend_image#gcr.io/${{vars.PROJECT_ID}}/frontend:${{github.run_number}}#g' ${{ github.workspace }}/micro-service/Helm-Charts/frontend/values-dev.yaml
+          sed -i 's#frontend_image#gcr.io/${{vars.PROJECT_ID}}/frontend:${{github.run_number}}#g' ${{ github.workspace }}/micro-service/Helm-Charts/frontend/values-test.yaml
+          sed -i 's#frontend_image#gcr.io/${{vars.PROJECT_ID}}/frontend:${{github.run_number}}#g' ${{ github.workspace }}/micro-service/Helm-Charts/frontend/values-prod.yaml
           sed -i 's#containerised_image#gcr.io/${{vars.PROJECT_ID}}/frontend:${{github.run_number}}#g' ${{ github.workspace }}/micro-service/containerised-app-deployment.yaml
 
       - name: Creating artifact
