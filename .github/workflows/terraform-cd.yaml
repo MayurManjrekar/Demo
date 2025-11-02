@@ -1,0 +1,77 @@
+name: 'Infrastructure CD'
+on:
+  workflow_dispatch:
+    inputs:
+      project_env:
+        description: "Project Env - Dev, Test, Prod"
+        required: True
+        type: choice
+        options:
+          - Dev
+
+env:
+  TFVARS: ./Infrastructure/${{ inputs.project_env }}/${{ inputs.project_env }}.tfvars
+
+jobs:
+  Terraform-Plan:
+    name: ${{ github.event.inputs.project_env }}-Terraform-Plan
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.project_env }}_Env
+    steps:
+      - name: Download Artifacts
+        uses: dawidd6/action-download-artifact@v8
+        with:
+          workflow: infra_ci.yaml
+          github_token: ${{ github.token }}
+          repo: ${{ github.repository }}
+          name: Infrastructure-Artifacts
+          path: Infrastructure-Artifacts
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+
+      - name: Terraform Init
+        run: terraform init --backend=false
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.SA_KEY }}
+
+      - name: Terraform Validate
+        run: terraform validate
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.SA_KEY }}
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -var-file="{{ env.TFVARS }}" -no-color -input=false
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.SA_KEY }}
+
+  Terraform-Apply:
+    name: ${{ github.event.inputs.project_env }}-Terraform-Apply
+    runs-on: ubuntu-latest
+    needs: Terraform-Plan
+    environment:
+      name: ${{ github.event.inputs.project_env }}_Env
+    steps:
+      - name: Download Artifacts
+        uses: dawidd6/action-download-artifact@v8
+        with:
+          workflow: infra_ci.yaml
+          github_token: ${{ github.token }}
+          repo: ${{ github.repository }}
+          name: Infrastructure-Artifacts
+          path: Infrastructure-Artifacts
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+
+      - name: Terraform Init
+        run: terraform init
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.SA_KEY }}
+
+      # - name: Terraform Apply
+      #   run: terraform apply -auto-approve -var-file="{{ env.TFVARS }}"  -input=false
+      #   env:
+      #     GOOGLE_CREDENTIALS: ${{ secrets.SA_KEY }}
