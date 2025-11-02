@@ -11,10 +11,6 @@ variable "region" {
   type = string
 }
 
-variable "cluster_info" {
-  type = string
-}
-
 variable "network" {
   type = string
 }
@@ -37,6 +33,16 @@ variable "cluster_ipv4_cidr_block" {
 
 variable "services_ipv4_cidr_block" {
   type = string
+}
+
+variable "cluster_info" {
+  type = object({
+    name                     = string
+    remove_default_node_pool = bool
+    initial_node_count       = number
+    release_channel          = string
+  })
+  description = "Configuration details for the GKE cluster."
 }
 
 variable "node_pools" {
