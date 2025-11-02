@@ -22,7 +22,7 @@ jobs:
       - name: Download Artifacts
         uses: dawidd6/action-download-artifact@v8
         with:
-          workflow: infra_ci.yaml
+          workflow: terraform-ci.yaml
           github_token: ${{ github.token }}
           repo: ${{ github.repository }}
           name: Infrastructure-Artifacts
@@ -40,12 +40,16 @@ jobs:
         run: terraform validate
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.SA_KEY }}
+      
+      - name: Print TFVARS File Path
+        run: |
+          echo "The .tfvars file path is: "{{ env.TFVARS}}" "
 
-      - name: Terraform Plan
-        id: plan
-        run: terraform plan -var-file="{{ env.TFVARS }}" -no-color -input=false
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.SA_KEY }}
+      # - name: Terraform Plan
+      #   id: plan
+      #   run: terraform plan -var-file="{{ env.TFVARS }}" -no-color -input=false
+      #   env:
+      #     GOOGLE_CREDENTIALS: ${{ secrets.SA_KEY }}
 
   Terraform-Apply:
     name: ${{ github.event.inputs.project_env }}-Terraform-Apply
@@ -66,10 +70,10 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v1
 
-      - name: Terraform Init
-        run: terraform init
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.SA_KEY }}
+      # - name: Terraform Init
+      #   run: terraform init
+      #   env:
+      #     GOOGLE_CREDENTIALS: ${{ secrets.SA_KEY }}
 
       # - name: Terraform Apply
       #   run: terraform apply -auto-approve -var-file="{{ env.TFVARS }}"  -input=false
