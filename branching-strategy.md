@@ -9,7 +9,7 @@ The branching model provides:
 - Isolated environments for testing and validation.
 - Protection for production and staging branches from accidental changes.
 
-## Branching Strategy
+## Branching Strategy 
 | Branch | Environment | 
 |---------|--------------|
 | `main` | Production | 
